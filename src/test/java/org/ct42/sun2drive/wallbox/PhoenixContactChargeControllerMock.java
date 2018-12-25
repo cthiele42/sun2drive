@@ -47,12 +47,21 @@ public class PhoenixContactChargeControllerMock {
         this(port, unitId, DEFAULT_INIT_DELAY);
     }
 
+    public void reset() {
+        setStatus((int)'A');
+        setChargeState(false);
+    }
+
     public void setStatus(int statusCode) {
         simpleProcessImage.setInputRegister(100, new SimpleInputRegister(statusCode));
     }
 
     public boolean getChargeState() {
         return simpleProcessImage.getDigitalOut(PhoenixContactChargeController.START_STOP_CHARGING_ADDRESS).isSet();
+    }
+
+    public void setChargeState(boolean enabled) {
+        simpleProcessImage.setDigitalOut(PhoenixContactChargeController.START_STOP_CHARGING_ADDRESS, new SimpleDigitalOut(enabled));
     }
 
     public void shutdown() {

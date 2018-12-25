@@ -30,7 +30,8 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 
 /**
- * Adapting the charge controller from Phoenix Contact (https://www.phoenixcontact.com/online/portal/us/?uri=pxc-oc-itemdetail:pid=1018701&library=usen&pcck=P-29-04-02-01&tab=1&selectedCategory=ALL)
+ * Adapting the charge controller from Phoenix Contact
+ * (https://www.phoenixcontact.com/online/portal/us/?uri=pxc-oc-itemdetail:pid=1018701&library=usen&pcck=P-29-04-02-01&tab=1&selectedCategory=ALL)
  * using ModbusTCP
  */
 public class PhoenixContactChargeController {
@@ -42,16 +43,35 @@ public class PhoenixContactChargeController {
     private int port;
     private TCPMasterConnection connection;
 
+    /**
+     * Create the Phoenix Contact charge controller adapter
+     *
+     * @param address of the charge controller
+     * @param unitID modbus unitid of the charge controller
+     * @param port TCP port of the charge controller, usually 502. Can be set differently for testing against mocks
+     * @throws UnknownHostException thrown if the hostname passed as address cannot be resolved
+     */
     public PhoenixContactChargeController(InetAddress address, int unitID, int port) throws UnknownHostException {
         this.address = address;
         this.port = port;
         this.unitID = unitID;
     }
 
+    /**
+     * Create the Phoenix Contact charge controller adapter with default modbus tcp port 502
+     *
+     * @param address of the charge controller
+     * @param unitID modbus unitid of the charge controller
+     * @throws UnknownHostException thrown if the hostname passed as address cannot be resolved
+     */
     public PhoenixContactChargeController(InetAddress address, int unitID) throws UnknownHostException {
         this(address, unitID, Modbus.DEFAULT_PORT);
     }
 
+    /**
+     *
+     * @throws Exception
+     */
     public void verifiedConnect() throws Exception {
         connection = new TCPMasterConnection(address);
         connection.setPort(port);

@@ -18,9 +18,7 @@
 
 package org.ct42.sun2drive.wallbox;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 
 import java.net.InetAddress;
 
@@ -29,15 +27,20 @@ import static org.junit.Assert.*;
 public class PhoenixContactChargeControllerTest {
     public static final int PORT = 32000;
     public static final int UNIT_ID = 255;
-    private PhoenixContactChargeControllerMock chargeControllerMock;
+    private static PhoenixContactChargeControllerMock chargeControllerMock;
 
-    @Before
-    public void setup() throws Exception {
+    @BeforeClass
+    public static void setupClass() throws Exception {
         chargeControllerMock = new PhoenixContactChargeControllerMock(PORT, UNIT_ID);
     }
 
-    @After
-    public void teardown() {
+    @Before
+    public void setup() {
+        chargeControllerMock.reset();
+    }
+
+    @AfterClass
+    public static void teardownClass() {
         chargeControllerMock.shutdown();
     }
 

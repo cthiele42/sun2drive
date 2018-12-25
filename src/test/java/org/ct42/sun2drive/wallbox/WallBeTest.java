@@ -16,7 +16,7 @@
  *
  */
 
-package org.ct42.sun2drive;
+package org.ct42.sun2drive.wallbox;
 
 import org.ct42.sun2drive.wallbox.Wallbe;
 import org.junit.After;
