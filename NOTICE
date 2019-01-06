@@ -3,3 +3,6 @@ Copyright 2018 Claas Thiele
 
 This product includes software developed at
 j2mod (https://github.com/steveohara/j2mod) licensed under Apache 2 License
+vert.x (https://vertx.io) licensed und Apache 2 and Eclipse Public License 2.0
+jquery (https://jquery.com) licensed under the MIT License
+sockjs (https://github.com/sockjs/sockjs-client) licensed under MIT license
