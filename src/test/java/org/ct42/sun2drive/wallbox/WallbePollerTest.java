@@ -56,13 +56,11 @@ public class WallbePollerTest {
         awaitedMessages.add(WallbePoller.DEFAULT_ID + ":" + WallbePoller.STATUS_VEHICLE_STATUS + ":NOT_CONNECTED");
 
         AtomicInteger currentmessage = new AtomicInteger(0);
-        Async async = context.async();
+        Async async = context.async(awaitedMessages.size());
 
         rule.vertx().eventBus().consumer(WallbePoller.SUN2DRIVE_EVENT_ADDRES, message -> {
             context.assertEquals(awaitedMessages.get(currentmessage.getAndIncrement()), message.body().toString());
-            if(awaitedMessages.size() == currentmessage.get()) {
-                async.complete();
-            }
+            async.countDown();
         });
 
         deploy(context);
