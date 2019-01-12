@@ -61,7 +61,7 @@ public class WallBeTest {
     @Test
     @Ignore("For manual testing only. Change WALLBE_ADDRESS to your needs")
     public void shouldGetChargingRatePreset() throws Exception {
-        System.out.println("Wallbe charging rate preset: " + wallbe.getChargeCurrentPreset() + " Watt");
+        System.out.println("Wallbe charging rate preset: " + (double)wallbe.getChargeCurrentPreset() / 10 + " Ampere");
     }
 
     @Test
@@ -72,8 +72,14 @@ public class WallBeTest {
 
     @Test
     @Ignore("For manual testing only. Change WALLBE_ADDRESS to your needs")
-    public void shouldSetChargeCurrentPWM() throws Exception {
+    public void shouldSetChargeCurrent() throws Exception {
         wallbe.setChargeCurrent(200);
         System.out.println("Wallbe charge current PWM: " + (double)wallbe.getChargeCurrentPWM() / 10 + " Ampere");
+    }
+
+    @Test
+    @Ignore("For manual testing only. Change WALLBE_ADDRESS to your needs")
+    public void shouldGetChargingTime() throws Exception {
+        System.out.println("Wallbe charging time: " + wallbe.getChargingTimeSeconds() + " Seconds");
     }
 }

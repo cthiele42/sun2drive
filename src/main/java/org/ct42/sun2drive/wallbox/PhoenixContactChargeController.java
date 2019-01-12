@@ -38,6 +38,7 @@ public class PhoenixContactChargeController {
     public static final int START_STOP_CHARGING_ADDRESS = 400;
     public static final int CHARGE_CURRENT_PRESET_ADDRESS = 528;
     public static final int CHARGE_CURRENT_PWM_ADDRESS = 300;
+    public static final int CHARGING_TIME_ADDRESS = 102;
 
     public static final double CHARGE_VOLT = 230;
 
@@ -196,6 +197,22 @@ public class PhoenixContactChargeController {
         } catch (ModbusException e) {
             throw new CommunicationException("Failed to set charge current PWM", e);
         }
+    }
+
+    public long getChargingTimeSeconds() throws CommunicationException {
+        ReadInputRegistersRequest readStatus = new ReadInputRegistersRequest(CHARGING_TIME_ADDRESS, 2);
+        readStatus.setUnitID(unitID);
+        ModbusTCPTransaction tx = new ModbusTCPTransaction(connection);
+        tx.setRequest(readStatus);
+        try {
+            tx.execute();
+        } catch (ModbusException e) {
+            throw new CommunicationException("Failed to get controller status", e);
+        }
+        ReadInputRegistersResponse statusResponse = (ReadInputRegistersResponse) tx.getResponse();
+        int secondsLow = statusResponse.getRegister(0).getValue();
+        int secondsHigh = statusResponse.getRegister(1).getValue();
+        return secondsHigh * 65536 + secondsLow;
     }
 
     public void disconnect() {
