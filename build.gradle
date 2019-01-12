@@ -37,5 +37,6 @@ dependencies {
 
 vertx {
     mainVerticle = 'org.ct42.sun2drive.main.Sun2DriveServer'
-    config = '{"http.port": 8080}'
+    config = '{"http.port": 8080,"wallbe.poll.delay": 1}'
+    jvmArgs = ['-Dvertx.logger-delegate-factory-class-name=io.vertx.core.logging.SLF4JLogDelegateFactory']
 }

@@ -18,7 +18,6 @@
 
 package org.ct42.sun2drive.wallbox;
 
-import org.ct42.sun2drive.wallbox.Wallbe;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -57,5 +56,24 @@ public class WallBeTest {
     @Ignore("For manual testing only. Change WALLBE_ADDRESS to your needs")
     public void shouldStopCharging() throws Exception {
         wallbe.stopCharging();
+    }
+
+    @Test
+    @Ignore("For manual testing only. Change WALLBE_ADDRESS to your needs")
+    public void shouldGetChargingRatePreset() throws Exception {
+        System.out.println("Wallbe charging rate preset: " + wallbe.getChargeCurrentPreset() + " Watt");
+    }
+
+    @Test
+    @Ignore("For manual testing only. Change WALLBE_ADDRESS to your needs")
+    public void shouldGetChargeCurrentPWM() throws Exception {
+        System.out.println("Wallbe charge current PWM: " + (double)wallbe.getChargeCurrentPWM() / 10  + " Ampere");
+    }
+
+    @Test
+    @Ignore("For manual testing only. Change WALLBE_ADDRESS to your needs")
+    public void shouldSetChargeCurrentPWM() throws Exception {
+        wallbe.setChargeCurrent(200);
+        System.out.println("Wallbe charge current PWM: " + (double)wallbe.getChargeCurrentPWM() / 10 + " Ampere");
     }
 }

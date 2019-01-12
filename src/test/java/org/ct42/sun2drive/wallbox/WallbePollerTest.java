@@ -1,11 +1,9 @@
 package org.ct42.sun2drive.wallbox;
 
 import io.vertx.core.DeploymentOptions;
-import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
-import io.vertx.ext.unit.collect.EventBusCollector;
 import io.vertx.ext.unit.junit.RunTestOnContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.junit.After;
@@ -54,12 +52,16 @@ public class WallbePollerTest {
         ArrayList<String> awaitedMessages = new ArrayList<>(2);
         awaitedMessages.add(WallbePoller.DEFAULT_ID + ":" + WallbePoller.STATUS_CONNECTED);
         awaitedMessages.add(WallbePoller.DEFAULT_ID + ":" + WallbePoller.STATUS_VEHICLE_STATUS + ":NOT_CONNECTED");
+        awaitedMessages.add(WallbePoller.DEFAULT_ID + ":" + WallbePoller.STATUS_VEHICLE_STATUS + ":CONNECTED");
 
         AtomicInteger currentmessage = new AtomicInteger(0);
         Async async = context.async(awaitedMessages.size());
 
-        rule.vertx().eventBus().consumer(WallbePoller.SUN2DRIVE_EVENT_ADDRES, message -> {
+        rule.vertx().eventBus().consumer(WallbePoller.SUN2DRIVE_EVENT_ADDRESS, message -> {
             context.assertEquals(awaitedMessages.get(currentmessage.getAndIncrement()), message.body().toString());
+            if(currentmessage.get() == 2) {
+                chargeControllerMock.setStatus(VEHICLE_STATUS.CONNECTED.getCode());
+            }
             async.countDown();
         });
 

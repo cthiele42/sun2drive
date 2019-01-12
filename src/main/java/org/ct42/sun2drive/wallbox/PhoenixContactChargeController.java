@@ -21,10 +21,9 @@ package org.ct42.sun2drive.wallbox;
 import com.ghgande.j2mod.modbus.Modbus;
 import com.ghgande.j2mod.modbus.ModbusException;
 import com.ghgande.j2mod.modbus.io.ModbusTCPTransaction;
-import com.ghgande.j2mod.modbus.msg.ReadInputRegistersRequest;
-import com.ghgande.j2mod.modbus.msg.ReadInputRegistersResponse;
-import com.ghgande.j2mod.modbus.msg.WriteCoilRequest;
+import com.ghgande.j2mod.modbus.msg.*;
 import com.ghgande.j2mod.modbus.net.TCPMasterConnection;
+import com.ghgande.j2mod.modbus.procimg.SimpleRegister;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -37,6 +36,10 @@ import java.net.UnknownHostException;
 public class PhoenixContactChargeController {
     public static final int STATUS_ADDRESS = 100;
     public static final int START_STOP_CHARGING_ADDRESS = 400;
+    public static final int CHARGE_CURRENT_PRESET_ADDRESS = 528;
+    public static final int CHARGE_CURRENT_PWM_ADDRESS = 300;
+
+    public static final double CHARGE_VOLT = 230;
 
     private InetAddress address;
     private int unitID;
@@ -75,6 +78,7 @@ public class PhoenixContactChargeController {
     public void verifiedConnect() throws Exception {
         connection = new TCPMasterConnection(address);
         connection.setPort(port);
+        connection.setTimeout(5000);
         connection.connect();
         try {
             VEHICLE_STATUS status = getStatus();
@@ -94,7 +98,6 @@ public class PhoenixContactChargeController {
             throw new CommunicationException("Failed to get controller status", e);
         }
         ReadInputRegistersResponse statusResponse = (ReadInputRegistersResponse) tx.getResponse();
-        ;
         int statusCode = statusResponse.getRegister(0).getValue();
         VEHICLE_STATUS status = VEHICLE_STATUS.getStatusForCode(statusCode);
         if(status == null) {
@@ -139,6 +142,59 @@ public class PhoenixContactChargeController {
             tx.execute();
         } catch (ModbusException e) {
             throw new CommunicationException("Failed to stop charging", e);
+        }
+    }
+
+    /**
+     *
+     * @return charge current in 100mA
+     * @throws CommunicationException
+     */
+    public int getChargeCurrentPreset() throws CommunicationException {
+        ReadMultipleRegistersRequest chargeCurrentRequest = new ReadMultipleRegistersRequest(CHARGE_CURRENT_PRESET_ADDRESS, 1);
+        chargeCurrentRequest.setUnitID(unitID);
+        ModbusTCPTransaction tx = new ModbusTCPTransaction(connection);
+        tx.setRequest(chargeCurrentRequest);
+        try {
+            tx.execute();
+        } catch (ModbusException e) {
+            throw new CommunicationException("Failed to get charging rate preset", e);
+        }
+        ReadMultipleRegistersResponse response = (ReadMultipleRegistersResponse) tx.getResponse();
+        return response.getRegister(0).getValue(); //.1A
+    }
+
+    /**
+     *
+     * @return charge current in 100mA
+     * @throws CommunicationException
+     */
+    public int getChargeCurrentPWM() throws CommunicationException {
+        ReadMultipleRegistersRequest chargeCurrentRequest = new ReadMultipleRegistersRequest(CHARGE_CURRENT_PWM_ADDRESS, 1);
+        chargeCurrentRequest.setUnitID(unitID);
+        ModbusTCPTransaction tx = new ModbusTCPTransaction(connection);
+        tx.setRequest(chargeCurrentRequest);
+        try {
+            tx.execute();
+        } catch (ModbusException e) {
+            throw new CommunicationException("Failed to get charge current PWM", e);
+        }
+        ReadMultipleRegistersResponse response = (ReadMultipleRegistersResponse) tx.getResponse();
+        return response.getRegister(0).getValue(); //.1A
+    }
+
+    public void setChargeCurrent(int current100mA) throws CommunicationException {
+        if(current100mA < 60 || current100mA > 320) {
+            throw new IllegalArgumentException("current100mA is out of range");
+        }
+        WriteSingleRegisterRequest chargeCurrentRequest = new  WriteSingleRegisterRequest(CHARGE_CURRENT_PRESET_ADDRESS, new SimpleRegister(current100mA));
+        chargeCurrentRequest.setUnitID(unitID);
+        ModbusTCPTransaction tx = new ModbusTCPTransaction(connection);
+        tx.setRequest(chargeCurrentRequest);
+        try {
+            tx.execute();
+        } catch (ModbusException e) {
+            throw new CommunicationException("Failed to set charge current PWM", e);
         }
     }
 

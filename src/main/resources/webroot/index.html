@@ -1,11 +1,21 @@
 <html>
     <head>
         <title>Sun2Drive</title>
-        <script src="js/jquery-3.3.1.slim.min.js"> </script>
-        <script src="js/sockjs-0.3.4.min.js"> </script>
-        <script src="js/vertx-eventbus.js"> </script>
     </head>
     <body>
         <h1>Sun2Drive</h1>
+        <div id="log"></div>
+        <script src="js/jquery-3.3.1.slim.min.js"> </script>
+        <script src="js/sockjs-0.3.4.min.js"> </script>
+        <script src="js/vertx-eventbus.js"> </script>
+        <script>
+            var eb = new EventBus('/eventbus/');
+            eb.onopen = function () {
+                eb.registerHandler('org.ct42.sun2drive', function (err, msg) {
+                    $('#log').prepend('<div>' + msg.body + '</div>');
+                });
+                eb.send('org.ct42.sun2drive', 'getStatus');
+            };
+        </script>
     </body>
 </html>
