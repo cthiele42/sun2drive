@@ -4,17 +4,65 @@
     </head>
     <body>
         <h1>Sun2Drive</h1>
-        <div id="log"></div>
+        <div id="connection_status"></div>
+        <div id="vehicle_status" class="info"></div>
+        <div id="charge_rate" class="chargeinfo"></div>
+        <div id="charging_time" class="chargeinfo"></div>
+        <input id="charge_action" type="button" disabled="true" value="Laden starten">
+
         <script src="js/jquery-3.3.1.slim.min.js"> </script>
         <script src="js/sockjs-0.3.4.min.js"> </script>
         <script src="js/vertx-eventbus.js"> </script>
         <script>
             var eb = new EventBus('/eventbus/');
+
+            $('#charge_action').click(function () {
+                if($( this ).val() == 'Laden starten') {
+                    eb.send('org.ct42.sun2drive.commands', 'startCharging');
+                } else {
+                    eb.send('org.ct42.sun2drive.commands', 'stopCharging');
+                }
+            });
+
             eb.onopen = function () {
                 eb.registerHandler('org.ct42.sun2drive', function (err, msg) {
-                    $('#log').prepend('<div>' + msg.body + '</div>');
+                    console.log('MSG: ' + msg.body);
+                    if(msg.body == 'wallbe:connected') {
+                        $('#connection_status').text('Mit Wallbox verbunden');
+                        $('.info').show();
+                    } else if(msg.body == 'wallbe:not_connected') {
+                        $('#connection_status').text('Keine Verbindung zur Wallbox');
+                        $('.info,.chargeinfo').hide();
+                    } else if(msg.body == 'wallbe:vehicle_status:NOT_CONNECTED') {
+                        $('.chargeinfo').hide();
+                        $('#charge_action').attr("disabled", true);
+                        $('#vehicle_status').text('kein Auto an die Wallbox angeschlossen');
+                    } else if(msg.body == 'wallbe:vehicle_status:ERROR_SHORT_CIRCUIT') {
+                        $('.chargeinfo').hide();
+                        $('#charge_action').attr("disabled", true);
+                        $('#vehicle_status').text('Fehler: Kurzschluss im Ladekabel');
+                    } else if(msg.body == 'wallbe:vehicle_status:ERROR_NOT_AVAILABLE') {
+                        $('.chargeinfo').hide();
+                        $('#charge_action').attr("disabled", true);
+                        $('#vehicle_status').text('Fehler: Wallbox nicht bereit');
+                    } else if(msg.body == 'wallbe:vehicle_status:CHARGING' ||
+                        msg.body == 'wallbe:vehicle_status:CHARGING_VENTILATED') {
+                        $('.chargeinfo').show();
+                        $('#charge_action').removeAttr("disabled");
+                        $('#charge_action').val('Laden stoppen');
+                        $('#vehicle_status').text('Auto lädt...');
+                    } else if(msg.body == 'wallbe:vehicle_status:CONNECTED') {
+                        $('.chargeinfo').hide();
+                        $('#charge_action').removeAttr("disabled");
+                        $('#charge_action').val('Laden starten');
+                        $('#vehicle_status').text('Auto ist an die Wallbox angeschlossen');
+                    } else if(msg.body.startsWith('wallbe:charge_rate_watt:')) {
+                        $('#charge_rate').text('Lädt mit ' + msg.body.substr(24) + 'Watt');
+                    } else if(msg.body.startsWith('wallbe:charging_time_seconds:')) {
+                        $('#charging_time').text('Lädt seit ' + msg.body.substr(29) + ' Sekunden');
+                    }
                 });
-                eb.send('org.ct42.sun2drive', 'getStatus');
+                eb.send('org.ct42.sun2drive.commands', 'getStatus');
             };
         </script>
     </body>

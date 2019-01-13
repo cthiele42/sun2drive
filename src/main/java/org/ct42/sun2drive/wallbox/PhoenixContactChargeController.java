@@ -40,8 +40,6 @@ public class PhoenixContactChargeController {
     public static final int CHARGE_CURRENT_PWM_ADDRESS = 300;
     public static final int CHARGING_TIME_ADDRESS = 102;
 
-    public static final double CHARGE_VOLT = 230;
-
     private InetAddress address;
     private int unitID;
     private int port;
