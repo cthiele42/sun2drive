@@ -18,31 +18,20 @@ public class NissanConnectTest {
             getChargeState();
             Thread.sleep(180000);
         }
-
     }
 
-    private void getChargeState() throws InterruptedException, java.util.concurrent.ExecutionException {
-        NissanConnectAsyncService service = new NissanConnectAsyncService();
-        // Log in
+    private void getChargeState() throws CommunicationException {
         String userId = System.getenv("NISSANCONNECT_USER");
         String password = System.getenv("NISSANCONNECT_PASSWORD");
-        service.login(Region.EUROPE, userId, password);
-
-        // Get state of charge (SOC) from server
-        Future<BatteryStatusRecordsResponse> batteryStatusRecords = service.getBatteryStatusRecords();
-        BatteryStatusRecordsResponse batteryStatusRecordsResponse = batteryStatusRecords.get();
-        String soc = batteryStatusRecordsResponse.getBatteryStatusRecords().getBatteryStatus().getSoc().getValue();
-        String operationDateAndTime = batteryStatusRecordsResponse.getBatteryStatusRecords().getOperationDateAndTime();
-        String batteryChargingStatus = batteryStatusRecordsResponse.getBatteryStatusRecords().getBatteryStatus().getBatteryChargingStatus();
-        String batteryRemainingAmountWH = batteryStatusRecordsResponse.getBatteryStatusRecords().getBatteryStatus().getBatteryRemainingAmountWH();
-        String pluginState = batteryStatusRecordsResponse.getBatteryStatusRecords().getPluginState();
+        NissanConnectController nissanConnectController = new NissanConnectController(userId, password);
+        NissanConnectController.ChargeState chargeState = nissanConnectController.getChargeState();
 
         System.out.println(
-                "pluginstate: " + pluginState +
-                "\nbatteryRemainingAmountWH: " + batteryRemainingAmountWH +
-                "\nchargingstatus: " + batteryChargingStatus +
-                "\noperationtime: " + operationDateAndTime +
-                "\nsoc: " + soc +
+                "pluginstate: " + chargeState.pluginState +
+                "\nbatteryRemainingAmountWH: " + chargeState.remainingWh +
+                "\nchargingstatus: " + chargeState.chargingStatus +
+                "\noperationtime: " + chargeState.operationTime +
+                "\nsoc: " + chargeState.socPercent +
                 "\n");
     }
 }
