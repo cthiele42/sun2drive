@@ -44,6 +44,6 @@ dependencies {
 
 vertx {
     mainVerticle = 'org.ct42.sun2drive.main.Sun2DriveServer'
-    config = file('/home/cthiele/.sun2drive/appliction.json')
+    config = '/home/cthiele/.sun2drive/application.json'
     jvmArgs = ['-Dvertx.logger-delegate-factory-class-name=io.vertx.core.logging.SLF4JLogDelegateFactory']
 }
