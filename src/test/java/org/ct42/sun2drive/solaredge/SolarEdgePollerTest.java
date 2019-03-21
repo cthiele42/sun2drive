@@ -86,7 +86,7 @@ public class SolarEdgePollerTest {
 
         DeploymentOptions options = new DeploymentOptions()
                 .setConfig(new JsonObject()
-                        .put("http.port", wireMockRule.port())
+                        .put("solaredge.port", wireMockRule.port())
                         .put("siteid", TEST_SITEID)
                         .put("accesstoken", TEST_ACCESSTOKEN)
                 );

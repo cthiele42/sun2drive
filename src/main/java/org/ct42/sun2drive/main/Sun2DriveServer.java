@@ -8,6 +8,7 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.StaticHandler;
 import io.vertx.ext.web.handler.sockjs.BridgeOptions;
 import io.vertx.ext.web.handler.sockjs.SockJSHandler;
+import org.ct42.sun2drive.coordinator.ChargeCoordinator;
 import org.ct42.sun2drive.solaredge.SolarEdgePoller;
 import org.ct42.sun2drive.vehicle.nissanconnect.NissanConnectPoller;
 import org.ct42.sun2drive.wallbox.WallbePoller;
@@ -40,5 +41,6 @@ public class Sun2DriveServer extends AbstractVerticle {
         vertx.deployVerticle(WallbePoller.class.getName(), deploymentOptions);
         vertx.deployVerticle(NissanConnectPoller.class.getName(), deploymentOptions);
         vertx.deployVerticle(SolarEdgePoller.class.getName(), deploymentOptions);
+        vertx.deployVerticle(ChargeCoordinator.class.getName(), deploymentOptions);
     }
 }

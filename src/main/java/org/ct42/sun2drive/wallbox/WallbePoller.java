@@ -80,6 +80,7 @@ public class WallbePoller extends AbstractVerticle {
                 } else if(message.body().toString().startsWith("setChargeCurrent100mA")) {
                     String[] msgParts = message.body().toString().split(":");
                     if(msgParts.length == 2) {
+                        LOG.debug("Received setChargeCurrent " + msgParts[1]);
                         try {
                             wallbe.setChargeCurrent(Integer.valueOf(msgParts[1]));
                         } catch(NumberFormatException e) {

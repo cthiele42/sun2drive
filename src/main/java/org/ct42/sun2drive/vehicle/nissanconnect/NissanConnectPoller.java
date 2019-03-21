@@ -55,17 +55,21 @@ public class NissanConnectPoller extends AbstractVerticle {
 
     private void poll() {
         if(wallBoxIsConnected) {
-            try {
-                NissanConnectController.ChargeState chargeState = controller.getChargeState();
-                String message = DEFAULT_ID + ":" +
-                        chargeState.pluginState + ":" +
-                        chargeState.chargingStatus + ":" +
-                        chargeState.socPercent;
-                vertx.eventBus().publish(SUN2DRIVE_EVENT_ADDRESS, message);
-                LOG.info("Charge state: " + message);
-            } catch (CommunicationException e) {
-                LOG.error("Getting charge status from nissan connect failed", e);
-            }
+            vertx.executeBlocking(future -> {
+                        try {
+
+                            NissanConnectController.ChargeState chargeState = controller.getChargeState();
+                            String message = DEFAULT_ID + ":" +
+                                    chargeState.pluginState + ":" +
+                                    chargeState.chargingStatus + ":" +
+                                    chargeState.socPercent;
+                            vertx.eventBus().publish(SUN2DRIVE_EVENT_ADDRESS, message);
+                            LOG.info("Charge state: " + message);
+                        } catch (CommunicationException e) {
+                            LOG.error("Getting charge status from nissan connect failed", e);
+                        }
+                        future.complete();
+                    }, res -> {});
         }
     }
 }

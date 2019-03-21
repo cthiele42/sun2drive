@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit;
 import static org.ct42.sun2drive.wallbox.WallbePoller.*;
 
 public class SolarEdgePoller extends AbstractVerticle {
-    static final String DEFAULT_ID = "solaredge";
+    public static final String DEFAULT_ID = "solaredge";
     private static final long DEFAULT_POLL_DELAY = 300;
     private static final Logger LOG = LoggerFactory.getLogger(SolarEdgePoller.class.getName());
 
@@ -30,8 +30,9 @@ public class SolarEdgePoller extends AbstractVerticle {
     @Override
     public void start() throws Exception {
         WebClientOptions options = new WebClientOptions()
-                .setDefaultHost("localhost")
-                .setDefaultPort(config().getInteger("http.port", 80));
+                .setDefaultHost(config().getString("solaredge.host", "localhost"))
+                .setDefaultPort(config().getInteger("solaredge.port", 80))
+                .setSsl(config().getBoolean("solaredge.usessl", false));
         webClient = WebClient.create(vertx, options);
         url = "/site/" + config().getString("siteid") + "/currentPowerFlow";
 
@@ -70,7 +71,7 @@ public class SolarEdgePoller extends AbstractVerticle {
                         if (ar.succeeded()) {
                             HttpResponse<Buffer> response = ar.result();
 
-                            if (response.statusCode() == 200 && response.getHeader("content-type").equals("application/json")) {
+                            if (response.statusCode() == 200 && response.getHeader("content-type").startsWith("application/json")) {
                                 JsonObject body = response.bodyAsJsonObject();
                                 JsonObject siteCurrentPowerFlow = body.getJsonObject("siteCurrentPowerFlow");
                                 Double homePower = null;
