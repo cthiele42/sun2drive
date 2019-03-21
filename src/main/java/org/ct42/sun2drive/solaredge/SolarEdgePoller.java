@@ -10,6 +10,7 @@ import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.client.WebClientOptions;
 import org.ct42.sun2drive.wallbox.VEHICLE_STATUS;
+import org.ct42.sun2drive.wallbox.WallbePoller;
 
 import java.util.concurrent.TimeUnit;
 
@@ -45,16 +46,16 @@ public class SolarEdgePoller extends AbstractVerticle {
         vertx.setTimer(delay, action);
 
         vertx.eventBus().consumer(SUN2DRIVE_EVENT_ADDRESS).handler(message -> {
-            if((DEFAULT_ID + ":" + STATUS_VEHICLE_STATUS + ":" + VEHICLE_STATUS.CONNECTED).equals(message.body())) {
+            if((WallbePoller.DEFAULT_ID + ":" + STATUS_VEHICLE_STATUS + ":" + VEHICLE_STATUS.CONNECTED).equals(message.body())) {
                 wallBoxIsConnected = true;
-                LOG.info("Vehicle connected to mwallbox, enable charge state polling...");
-            } else if((DEFAULT_ID + ":" + STATUS_VEHICLE_STATUS + ":" + VEHICLE_STATUS.NOT_CONNECTED).equals(message.body()) ||
-                    message.body().toString().startsWith(DEFAULT_ID + ":" + STATUS_VEHICLE_STATUS + ":ERROR") ||
-                    message.body().toString().startsWith(DEFAULT_ID + ":" + STATUS_COMMUNICATION_ERROR) ||
-                    message.body().toString().startsWith(DEFAULT_ID + ":" + STATUS_CONNECTION_ERROR) ||
-                    (DEFAULT_ID + ":" + STATUS_NOT_CONNECTED).equals(message.body())) {
+                LOG.info("Vehicle connected to wallbox, enable charge state polling...");
+            } else if((WallbePoller.DEFAULT_ID + ":" + STATUS_VEHICLE_STATUS + ":" + VEHICLE_STATUS.NOT_CONNECTED).equals(message.body()) ||
+                    message.body().toString().startsWith(WallbePoller.DEFAULT_ID + ":" + STATUS_VEHICLE_STATUS + ":ERROR") ||
+                    message.body().toString().startsWith(WallbePoller.DEFAULT_ID + ":" + STATUS_COMMUNICATION_ERROR) ||
+                    message.body().toString().startsWith(WallbePoller.DEFAULT_ID + ":" + STATUS_CONNECTION_ERROR) ||
+                    (WallbePoller.DEFAULT_ID + ":" + STATUS_NOT_CONNECTED).equals(message.body())) {
                 wallBoxIsConnected = false;
-                LOG.info("Vehicle disconnected from mwallbox, disnable charge state polling...");
+                LOG.info("Vehicle disconnected from wallbox, disable charge state polling...");
             }
         });
 
