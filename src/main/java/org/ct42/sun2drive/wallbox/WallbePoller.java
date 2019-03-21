@@ -77,6 +77,17 @@ public class WallbePoller extends AbstractVerticle {
                         wallbe.stopCharging();
                     }
 
+                } else if(message.body().toString().startsWith("setChargeCurrent100mA")) {
+                    String[] msgParts = message.body().toString().split(":");
+                    if(msgParts.length == 2) {
+                        try {
+                            wallbe.setChargeCurrent(Integer.valueOf(msgParts[1]));
+                        } catch(NumberFormatException e) {
+                            LOG.info("Received unparsaeble message (wrong number format): " + message.body());
+                        }
+                    } else {
+                        LOG.info("Received unparsaeble message: " + message.body());
+                    }
                 }
             } catch(CommunicationException e) {
                 LOG.error("Communication error", e);

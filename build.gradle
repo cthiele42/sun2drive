@@ -31,16 +31,19 @@ repositories {
 
 dependencies {
     compile group: 'io.vertx', name: 'vertx-web', version: '3.6.2'
+    compile group: 'io.vertx', name: 'vertx-web-client', version: '3.6.2'
     compile group: 'com.ghgande', name: 'j2mod', version: '2.5.2'
     compile group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.3'
     compile group: 'solutions.tveit.nissanconnect', name: 'nissanconnect-api', version: '1.0.0-SNAPSHOT'
 
     testCompile group: 'junit', name: 'junit', version: '4.12'
     testCompile group: 'io.vertx', name: 'vertx-unit', version: '3.6.2'
+    testCompile group: 'com.github.tomakehurst', name: 'wiremock-jre8', version: '2.21.0'
+
 }
 
 vertx {
     mainVerticle = 'org.ct42.sun2drive.main.Sun2DriveServer'
-    config = '{"http.port": 8080,"wallbe.poll.delay": 1}'
+    config = file('/home/cthiele/.sun2drive/appliction.json')
     jvmArgs = ['-Dvertx.logger-delegate-factory-class-name=io.vertx.core.logging.SLF4JLogDelegateFactory']
 }

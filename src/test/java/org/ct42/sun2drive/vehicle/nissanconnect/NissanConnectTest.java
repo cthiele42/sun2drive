@@ -2,12 +2,8 @@ package org.ct42.sun2drive.vehicle.nissanconnect;
 
 import org.junit.Ignore;
 import org.junit.Test;
-import solutions.tveit.nissanconnect.NissanConnectAsyncService;
-import solutions.tveit.nissanconnect.Region;
-import solutions.tveit.nissanconnect.api.batterystatusrecords.BatteryStatusRecordsResponse;
 
 import java.util.Date;
-import java.util.concurrent.Future;
 
 public class NissanConnectTest {
     @Test
