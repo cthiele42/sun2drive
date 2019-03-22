@@ -93,6 +93,7 @@ public class WallbePoller extends AbstractVerticle {
             } catch(CommunicationException e) {
                 LOG.error("Communication error", e);
                 publishCommunicationError(e.getMessage());
+                state_vehicle_status = null;
             }
         });
     }
@@ -132,6 +133,7 @@ public class WallbePoller extends AbstractVerticle {
             } catch(CommunicationException e) {
                 LOG.error("Communication error", e);
                 publishCommunicationError(e.getMessage());
+                state_vehicle_status = null;
             }
         }
     }

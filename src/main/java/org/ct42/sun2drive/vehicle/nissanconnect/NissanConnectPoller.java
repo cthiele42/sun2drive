@@ -39,7 +39,9 @@ public class NissanConnectPoller extends AbstractVerticle {
         vertx.setTimer(delay, action);
 
         vertx.eventBus().consumer(SUN2DRIVE_EVENT_ADDRESS).handler(message -> {
-            if((WallbePoller.DEFAULT_ID + ":" + STATUS_VEHICLE_STATUS + ":" + VEHICLE_STATUS.CONNECTED).equals(message.body())) {
+            if((WallbePoller.DEFAULT_ID + ":" + STATUS_VEHICLE_STATUS + ":" + VEHICLE_STATUS.CONNECTED).equals(message.body()) ||
+               (WallbePoller.DEFAULT_ID + ":" + STATUS_VEHICLE_STATUS + ":" + VEHICLE_STATUS.CHARGING).equals(message.body()) ||
+               (WallbePoller.DEFAULT_ID + ":" + STATUS_VEHICLE_STATUS + ":" + VEHICLE_STATUS.CHARGING_VENTILATED).equals(message.body())) {
                 wallBoxIsConnected = true;
                 LOG.info("Vehicle connected to wallbox, enable charge state polling...");
             } else if((WallbePoller.DEFAULT_ID + ":" + STATUS_VEHICLE_STATUS + ":" + VEHICLE_STATUS.NOT_CONNECTED).equals(message.body()) ||
