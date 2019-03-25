@@ -8,12 +8,28 @@
         <div id="vehicle_status" class="info"></div>
         <div id="charge_rate" class="chargeinfo"></div>
         <div id="charging_time" class="chargeinfo"></div>
+        <div id="vehicle_pluginstate" class="vehicleinfo"></div>
+        <div id="vehicle_chargestate" class="vehicleinfo"></div>
+        <div id="vehicle_soc" class="vehicleinfo"></div>
+
         <input id="charge_action" type="button" disabled="true" value="Laden starten">
 
         <script src="js/jquery-3.3.1.slim.min.js"> </script>
         <script src="js/sockjs-0.3.4.min.js"> </script>
         <script src="js/vertx-eventbus.js"> </script>
         <script>
+            String.prototype.toHHMMSS = function () {
+                var sec_num = parseInt(this, 10); // don't forget the second param
+                var hours   = Math.floor(sec_num / 3600);
+                var minutes = Math.floor((sec_num - (hours * 3600)) / 60);
+                var seconds = sec_num - (hours * 3600) - (minutes * 60);
+
+                if (hours   < 10) {hours   = "0"+hours;}
+                if (minutes < 10) {minutes = "0"+minutes;}
+                if (seconds < 10) {seconds = "0"+seconds;}
+                return hours+':'+minutes+':'+seconds;
+            }
+
             var eb = new EventBus('/eventbus/');
 
             $('#charge_action').click(function () {
@@ -34,32 +50,60 @@
                         $('#connection_status').text('Keine Verbindung zur Wallbox');
                         $('.info,.chargeinfo').hide();
                     } else if(msg.body == 'wallbe:vehicle_status:NOT_CONNECTED') {
-                        $('.chargeinfo').hide();
+                        $('.chargeinfo, .vehicleinfo').hide();
                         $('#charge_action').attr("disabled", true);
                         $('#vehicle_status').text('kein Auto an die Wallbox angeschlossen');
                     } else if(msg.body == 'wallbe:vehicle_status:ERROR_SHORT_CIRCUIT') {
-                        $('.chargeinfo').hide();
+                        $('.chargeinfo, .vehicleinfo').hide();
                         $('#charge_action').attr("disabled", true);
                         $('#vehicle_status').text('Fehler: Kurzschluss im Ladekabel');
                     } else if(msg.body == 'wallbe:vehicle_status:ERROR_NOT_AVAILABLE') {
-                        $('.chargeinfo').hide();
+                        $('.chargeinfo, .vehicleinfo').hide();
                         $('#charge_action').attr("disabled", true);
                         $('#vehicle_status').text('Fehler: Wallbox nicht bereit');
                     } else if(msg.body == 'wallbe:vehicle_status:CHARGING' ||
                         msg.body == 'wallbe:vehicle_status:CHARGING_VENTILATED') {
-                        $('.chargeinfo').show();
+                        $('.chargeinfo, .vehicleinfo').show();
                         $('#charge_action').removeAttr("disabled");
                         $('#charge_action').val('Laden stoppen');
                         $('#vehicle_status').text('Auto lädt...');
                     } else if(msg.body == 'wallbe:vehicle_status:CONNECTED') {
                         $('.chargeinfo').hide();
+                        $('.vehicleinfo').show();
                         $('#charge_action').removeAttr("disabled");
                         $('#charge_action').val('Laden starten');
                         $('#vehicle_status').text('Auto ist an die Wallbox angeschlossen');
                     } else if(msg.body.startsWith('wallbe:charge_rate_watt:')) {
-                        $('#charge_rate').text('Lädt mit ' + msg.body.substr(24) + 'Watt');
+                        $('#charge_rate').text('Lädt mit ' + msg.body.substr(24) + ' Watt');
                     } else if(msg.body.startsWith('wallbe:charging_time_seconds:')) {
-                        $('#charging_time').text('Lädt seit ' + msg.body.substr(29) + ' Sekunden');
+                        $('#charging_time').text('Lädt seit ' + msg.body.substr(29).toHHMMSS());
+                    } else if(msg.body.startsWith('leaf:')) {
+                        var values = msg.body.split(':');
+                        var pluginState = values[1];
+                        var chargingStatus = values[2];
+                        var soc = values[3];
+
+                        if(pluginState == 'NOT_CONNECTED') {
+                            $('#vehicle_pluginstate').text('Krabat ist nicht angeschlossen');
+                        } else if(pluginState == 'QC_CONNECTED') {
+                            $('#vehicle_pluginstate').text('Krabat ist zum Schnellladen angeschlossen');
+                        } else if(pluginState == 'CONNECTED') {
+                            $('#vehicle_pluginstate').text('Krabat ist zum Normalladen angeschlossen');
+                        } else {
+                            $('#vehicle_pluginstate').text('Krabat ist zum Laden angeschlossen (' + pluginState + ')');
+                        }
+
+                        if(chargingStatus == 'NOT_CHARGING') {
+                            $('#vehicle_chargestate').text('Krabat läd nicht');
+                        } else if(chargingStatus == 'RAPIDLY_CHARGING') {
+                            $('#vehicle_chargestate').text('Krabat läd schnell');
+                        } else if(chargingStatus == 'NORMAL_CHARGING') {
+                            $('#vehicle_chargestate').text('Krabat läd mit normaler Geschwindigkeit');
+                        } else {
+                            $('#vehicle_chargestate').text('Krabat läd irgendwie (' + chargingStatus + ')');
+                        }
+
+                        $('#vehicle_soc').text('Krabats Batterie ist zu ' + soc + '% geladen');
                     }
                 });
                 eb.send('org.ct42.sun2drive.commands', 'getStatus');

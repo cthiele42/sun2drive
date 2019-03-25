@@ -42,12 +42,10 @@ public class ChargeCoordinator extends AbstractVerticle {
                             }
                         } else {
                             LOG.info("Not enough overhang power (" + overhang + "kW)");
-                            if(isCharging) {
-                                isCharging = false;
-                                vertx.eventBus().send(WallbePoller.SUN2DRIVE_COMMANDS_ADDRESS, "stopCharging");
-                                activeChargerate = 0;
-                                LOG.info("Stopped charging...");
-                            }
+                            isCharging = false;
+                            vertx.eventBus().send(WallbePoller.SUN2DRIVE_COMMANDS_ADDRESS, "stopCharging");
+                            activeChargerate = 0;
+                            LOG.info("Stopped charging...");
                         }
 
                     } catch(NumberFormatException e) {

@@ -28,7 +28,7 @@ public class NissanConnectController {
         ChargeState chargeState = new ChargeState();
 
         NissanConnectAsyncService service = new NissanConnectAsyncService();
-        login(service);
+        service.login(Region.EUROPE, user, password);
 
         Future<BatteryStatusRecordsResponse> batteryStatusRecords = service.getBatteryStatusRecords();
         BatteryStatusRecordsResponse batteryStatusRecordsResponse = null;
@@ -44,11 +44,5 @@ public class NissanConnectController {
         chargeState.pluginState = batteryStatusRecordsResponse.getBatteryStatusRecords().getPluginState();
 
         return chargeState;
-    }
-
-    private void login(NissanConnectAsyncService service) {
-        String userId = System.getenv("NISSANCONNECT_USER");
-        String password = System.getenv("NISSANCONNECT_PASSWORD");
-        service.login(Region.EUROPE, userId, password);
     }
 }
