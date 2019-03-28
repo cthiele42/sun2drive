@@ -6,8 +6,7 @@ import io.vertx.core.logging.LoggerFactory;
 import org.ct42.sun2drive.solaredge.SolarEdgePoller;
 import org.ct42.sun2drive.wallbox.WallbePoller;
 
-import static org.ct42.sun2drive.wallbox.WallbePoller.STATUS_CHARGE_RATE_WATT;
-import static org.ct42.sun2drive.wallbox.WallbePoller.SUN2DRIVE_EVENT_ADDRESS;
+import static org.ct42.sun2drive.wallbox.WallbePoller.*;
 
 public class ChargeCoordinator extends AbstractVerticle {
     private static final Logger LOG = LoggerFactory.getLogger(ChargeCoordinator.class.getName());
@@ -15,9 +14,15 @@ public class ChargeCoordinator extends AbstractVerticle {
     private static final double MIN_OVERHANG = 1.380;
     private static final double RATE_FACTOR = 23;
     private static final int MAX_CHARGE_RATE = 200;
+    private static final double CUTOVER_LIMIT = 5.0;
+    private static final double CUTOVER_USE = 3.9;
+    private static final String DEFAULT_ID = "coordinator";
+    private static final String CONSUME_CUTOVER = "consumecutover";
+    public static final String SUN2DRIVE_COORDINATOR_ADDRESS = "org.ct42.sun2drive.coordinator";
 
     private boolean isCharging = false;
     private int activeChargerate = 0;
+    private boolean consumeCutOver = true;
 
     @Override
     public void start() throws Exception {
@@ -30,24 +35,45 @@ public class ChargeCoordinator extends AbstractVerticle {
                         double homePower = Double.valueOf(values[1]);
                         double pvPower = Double.valueOf(values[2]);
                         double overhang = pvPower - THRESHOLD - (homePower - ((((double)activeChargerate) * RATE_FACTOR) / 1000));
-                        if(overhang > MIN_OVERHANG) {
-                            int chargeRate = Math.min((int)((overhang * 1000) / RATE_FACTOR), MAX_CHARGE_RATE);
-                            LOG.info("Setting charge rate to " + chargeRate);
-                            vertx.eventBus().send(WallbePoller.SUN2DRIVE_COMMANDS_ADDRESS, "setChargeCurrent100mA:" + chargeRate);
-                            activeChargerate = chargeRate;
-                            if(!isCharging) {
-                                isCharging = true;
-                                vertx.eventBus().send(WallbePoller.SUN2DRIVE_COMMANDS_ADDRESS, "startCharging");
-                                LOG.info("Started charging...");
+                        if(consumeCutOver) {
+                            double sureplus = pvPower - THRESHOLD - homePower;
+                            if(sureplus > CUTOVER_LIMIT) {
+                                int chargeRate = (int)(CUTOVER_USE * 1000 / RATE_FACTOR);
+                                LOG.info("Using cutover, setting chargerate to " + chargeRate);
+                                vertx.eventBus().send(WallbePoller.SUN2DRIVE_COMMANDS_ADDRESS, "setChargeCurrent100mA:" + chargeRate);
+                                activeChargerate = chargeRate;
+                                if(!isCharging) {
+                                    isCharging = true;
+                                    vertx.eventBus().send(WallbePoller.SUN2DRIVE_COMMANDS_ADDRESS, "startCharging");
+                                    LOG.info("Started charging...");
+                                }
+
+                            } else {
+                                LOG.info("No cutover (" + (sureplus - CUTOVER_LIMIT) + "kW)");
+                                isCharging = false;
+                                vertx.eventBus().send(WallbePoller.SUN2DRIVE_COMMANDS_ADDRESS, "stopCharging");
+                                activeChargerate = 0;
+                                LOG.info("Stopped charging...");
                             }
                         } else {
-                            LOG.info("Not enough overhang power (" + overhang + "kW)");
-                            isCharging = false;
-                            vertx.eventBus().send(WallbePoller.SUN2DRIVE_COMMANDS_ADDRESS, "stopCharging");
-                            activeChargerate = 0;
-                            LOG.info("Stopped charging...");
+                            if(overhang > MIN_OVERHANG) {
+                                int chargeRate = Math.min((int)((overhang * 1000) / RATE_FACTOR), MAX_CHARGE_RATE);
+                                LOG.info("Setting charge rate to " + chargeRate);
+                                vertx.eventBus().send(WallbePoller.SUN2DRIVE_COMMANDS_ADDRESS, "setChargeCurrent100mA:" + chargeRate);
+                                activeChargerate = chargeRate;
+                                if(!isCharging) {
+                                    isCharging = true;
+                                    vertx.eventBus().send(WallbePoller.SUN2DRIVE_COMMANDS_ADDRESS, "startCharging");
+                                    LOG.info("Started charging...");
+                                }
+                            } else {
+                                LOG.info("Not enough overhang power (" + overhang + "kW)");
+                                isCharging = false;
+                                vertx.eventBus().send(WallbePoller.SUN2DRIVE_COMMANDS_ADDRESS, "stopCharging");
+                                activeChargerate = 0;
+                                LOG.info("Stopped charging...");
+                            }
                         }
-
                     } catch(NumberFormatException e) {
                         LOG.error("Received solaredge message of wrong format", e);
                     }
@@ -67,6 +93,35 @@ public class ChargeCoordinator extends AbstractVerticle {
                 } else {
                     LOG.warn("Received wallbe message of wrong format");
                 }
+            } else if(msg.startsWith(WallbePoller.DEFAULT_ID + ":" + STATUS_CONNECTED) ||
+                    msg.startsWith(WallbePoller.DEFAULT_ID + ":" + STATUS_NOT_CONNECTED) ||
+                    msg.startsWith(WallbePoller.DEFAULT_ID + ":" + STATUS_CONNECTION_ERROR)) { //stop charging on wallbox if vehicle is disconnected or stopped charging
+                LOG.info("Vehicle stopped charging");
+                isCharging = false;
+                vertx.eventBus().send(WallbePoller.SUN2DRIVE_COMMANDS_ADDRESS, "stopCharging");
+                activeChargerate = 0;
+                LOG.info("Stopped charging...");
+            }
+        });
+
+        vertx.eventBus().consumer(SUN2DRIVE_COORDINATOR_ADDRESS).handler(message -> {
+            if (message.body().toString().startsWith("switchCutoverUse")) {
+                String[] values = message.body().toString().split(":");
+                if (values.length == 2) {
+                    boolean newConsumeCutOver = Boolean.valueOf(values[1]);
+                    if (consumeCutOver != newConsumeCutOver) {
+                        consumeCutOver = newConsumeCutOver;
+                        vertx.eventBus().publish(SUN2DRIVE_EVENT_ADDRESS, DEFAULT_ID + ":" + CONSUME_CUTOVER + ":" + Boolean.toString(consumeCutOver));
+                        LOG.info("Switched consumeCutover to " + Boolean.toString(consumeCutOver));
+                    }
+                } else {
+                    LOG.warn("Received command message of wrong format");
+                }
+            }
+        });
+        vertx.eventBus().consumer(SUN2DRIVE_COMMANDS_ADDRESS).handler(message -> {
+            if("getStatus".equals(message.body())) {
+                vertx.eventBus().publish(SUN2DRIVE_EVENT_ADDRESS, DEFAULT_ID + ":" + CONSUME_CUTOVER + ":" + Boolean.toString(consumeCutOver));
             }
         });
     }

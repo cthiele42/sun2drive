@@ -12,7 +12,13 @@
         <div id="vehicle_chargestate" class="vehicleinfo"></div>
         <div id="vehicle_soc" class="vehicleinfo"></div>
 
-        <input id="charge_action" type="button" disabled="true" value="Laden starten">
+        <!-- <div><input id="charge_action" type="button" disabled="true" value="Laden starten"></div> -->
+        <div>
+            <label>
+                <input id="consume_cutover" type="checkbox"  disabled="true">
+                Überschuss abschöpfen
+            </label>
+        </div>
 
         <script src="js/jquery-3.3.1.slim.min.js"> </script>
         <script src="js/sockjs-0.3.4.min.js"> </script>
@@ -38,6 +44,11 @@
                 } else {
                     eb.send('org.ct42.sun2drive.commands', 'stopCharging');
                 }
+            });
+
+            $('#consume_cutover').change(function() {
+                var msg = 'switchCutoverUse:' + $(this).is(":checked")
+                eb.send('org.ct42.sun2drive.coordinator', msg);
             });
 
             eb.onopen = function () {
@@ -104,6 +115,10 @@
                         }
 
                         $('#vehicle_soc').text('Krabats Batterie ist zu ' + soc + '% geladen');
+                    } else if(msg.body.startsWith('coordinator:consumecutover:')) {
+                        var consume = msg.body.substr(27);
+                        $('#consume_cutover').prop('checked', consume.toLowerCase() == 'true');
+                        $('#consume_cutover').prop('disabled', false);
                     }
                 });
                 eb.send('org.ct42.sun2drive.commands', 'getStatus');
