@@ -19,6 +19,12 @@
                 Überschuss abschöpfen
             </label>
         </div>
+        <div>
+            <labe>
+                Maximale Batterieladung
+                <input id="maxsoc" disabled="true" maxlength="3" size="3">
+            </labe>
+        </div>
 
         <script src="js/jquery-3.3.1.slim.min.js"> </script>
         <script src="js/sockjs-0.3.4.min.js"> </script>
@@ -40,15 +46,20 @@
 
             $('#charge_action').click(function () {
                 if($( this ).val() == 'Laden starten') {
-                    eb.send('org.ct42.sun2drive.commands', 'startCharging');
+                    eb.publish('org.ct42.sun2drive.commands', 'startCharging');
                 } else {
-                    eb.send('org.ct42.sun2drive.commands', 'stopCharging');
+                    eb.publish('org.ct42.sun2drive.commands', 'stopCharging');
                 }
             });
 
             $('#consume_cutover').change(function() {
                 var msg = 'switchCutoverUse:' + $(this).is(":checked")
-                eb.send('org.ct42.sun2drive.coordinator', msg);
+                eb.publish('org.ct42.sun2drive.commands', msg);
+            });
+
+            $('#maxsoc').blur(function() {
+                var soc = $(this).val()
+                eb.publish('org.ct42.sun2drive.commands', 'setMaxSoc:' + soc);
             });
 
             eb.onopen = function () {
@@ -119,9 +130,13 @@
                         var consume = msg.body.substr(27);
                         $('#consume_cutover').prop('checked', consume.toLowerCase() == 'true');
                         $('#consume_cutover').prop('disabled', false);
+                    } else if(msg.body.startsWith("coordinator:maxsoc:")) {
+                        var maxsoc = msg.body.substr(19);
+                        $('#maxsoc').val(maxsoc);
+                        $('#maxsoc').prop('disabled', false);
                     }
                 });
-                eb.send('org.ct42.sun2drive.commands', 'getStatus');
+                eb.publish('org.ct42.sun2drive.commands', 'getStatus');
             };
         </script>
     </body>

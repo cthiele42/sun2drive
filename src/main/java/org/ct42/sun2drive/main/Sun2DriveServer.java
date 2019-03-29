@@ -21,8 +21,7 @@ public class Sun2DriveServer extends AbstractVerticle {
         BridgeOptions opts = new BridgeOptions()
                 .addOutboundPermitted(new PermittedOptions().setAddress(WallbePoller.SUN2DRIVE_EVENT_ADDRESS))
                 .addInboundPermitted(new PermittedOptions().setAddress(WallbePoller.SUN2DRIVE_EVENT_ADDRESS))
-                .addInboundPermitted(new PermittedOptions().setAddress(WallbePoller.SUN2DRIVE_COMMANDS_ADDRESS))
-                .addInboundPermitted(new PermittedOptions().setAddress(ChargeCoordinator.SUN2DRIVE_COORDINATOR_ADDRESS));
+                .addInboundPermitted(new PermittedOptions().setAddress(WallbePoller.SUN2DRIVE_COMMANDS_ADDRESS));
 
         SockJSHandler ebHandler = SockJSHandler.create(vertx).bridge(opts);
         router.route("/eventbus/*").handler(ebHandler);

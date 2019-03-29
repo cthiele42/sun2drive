@@ -13,7 +13,7 @@ import static org.ct42.sun2drive.wallbox.WallbePoller.*;
 
 public class NissanConnectPoller extends AbstractVerticle {
     private static final long DEFAULT_POLL_DELAY = 180;
-    private static final String DEFAULT_ID = "leaf";
+    public static final String DEFAULT_ID = "leaf";
 
     private static final Logger LOG = LoggerFactory.getLogger(NissanConnectPoller.class.getName());
 
