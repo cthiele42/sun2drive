@@ -2,10 +2,13 @@ package org.ct42.sun2drive.main;
 
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
+import io.vertx.ext.web.client.HttpResponse;
+import io.vertx.ext.web.client.WebClient;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -40,12 +43,16 @@ public class Sun2DriveServerTest {
     @Test
     public void shouldProvideWebPage(TestContext context) throws Exception {
         final Async async = context.async();
-        vertx.createHttpClient().getNow(port, "localhost", "/", response -> {
-            response.handler(body -> {
-                context.assertTrue(body.toString().contains("Sun2Drive"));
+        WebClient client = WebClient.create(vertx);
+        client.get(port, "localhost", "/").send(ar -> {
+            if(ar.succeeded()) {
+                HttpResponse<Buffer> response = ar.result();
+                context.assertTrue(response.body().toString().contains("Sun2Drive"));
                 async.complete();
-            });
+            } else {
+                context.fail(ar.cause().getMessage());
+                async.complete();
+            }
         });
-
     }
 }

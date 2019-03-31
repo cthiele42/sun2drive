@@ -34,14 +34,15 @@ public class ChargeCoordinator extends AbstractVerticle {
             String msg = message.body().toString();
             if(msg.startsWith(SolarEdgePoller.DEFAULT_ID)) {
                 String[] values = msg.split(":");
-                if(values.length == 5) {
+                if(values.length == 6) {
                     try {
                         double homePower = Double.valueOf(values[1]);
                         double pvPower = Double.valueOf(values[2]);
-                        double overhang = pvPower - THRESHOLD - (homePower - ((((double)activeChargerate) * RATE_FACTOR) / 1000));
+                        double gridPower = Double.valueOf(values[5]);
+                        double chargeRatekWh = (((double) activeChargerate) * RATE_FACTOR) / 1000;
+                        double overhang = pvPower - THRESHOLD - (homePower - chargeRatekWh);
                         if(consumeCutOver) {
-                            double sureplus = pvPower - THRESHOLD - homePower;
-                            if((sureplus > CUTOVER_LIMIT) && !maxSocReached()) {
+                            if(((gridPower + chargeRatekWh) > (CUTOVER_LIMIT - THRESHOLD) && pvPower > CUTOVER_LIMIT - THRESHOLD) && !maxSocReached()) {
                                 int chargeRate = (int)(CUTOVER_USE * 1000 / RATE_FACTOR);
                                 LOG.info("Using cutover, setting chargerate to " + chargeRate);
                                 vertx.eventBus().publish(WallbePoller.SUN2DRIVE_COMMANDS_ADDRESS, "setChargeCurrent100mA:" + chargeRate);
@@ -51,12 +52,11 @@ public class ChargeCoordinator extends AbstractVerticle {
                                     vertx.eventBus().publish(WallbePoller.SUN2DRIVE_COMMANDS_ADDRESS, "startCharging");
                                     LOG.info("Started charging...");
                                 }
-
                             } else {
                                 if(maxSocReached()) {
                                     LOG.info("Max Soc of " + maxSoc + "% reached");
                                 } else {
-                                    LOG.info("No cutover (" + (sureplus - CUTOVER_LIMIT) + "kW)");
+                                    LOG.info("No cutover");
                                 }
                                 isCharging = false;
                                 vertx.eventBus().publish(WallbePoller.SUN2DRIVE_COMMANDS_ADDRESS, "stopCharging");
@@ -168,6 +168,6 @@ public class ChargeCoordinator extends AbstractVerticle {
     }
 
     private boolean maxSocReached() {
-        return currentSoc < maxSoc;
+        return currentSoc >= maxSoc;
     }
 }

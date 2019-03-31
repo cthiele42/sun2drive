@@ -54,13 +54,14 @@ public class WallbePoller extends AbstractVerticle {
                 if ("getStatus".equals(message.body())) {
                     LOG.debug("Received getStatus");
                     if (state_connected) {
-                        publishConnected();
                         if (state_vehicle_status != null) {
                             publishVehicleStatus();
                             if (vehicleIsCharging()) {
                                 publishChargeRate();
                                 publishChargingTime();
                             }
+                        } else {
+                            publishConnected();
                         }
                     } else {
                         publishNotConnected();

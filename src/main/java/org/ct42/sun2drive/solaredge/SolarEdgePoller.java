@@ -78,6 +78,7 @@ public class SolarEdgePoller extends AbstractVerticle {
                                 JsonObject siteCurrentPowerFlow = body.getJsonObject("siteCurrentPowerFlow");
                                 Double homePower = null;
                                 Double pvPower = null;
+                                Double gridPower = null;
                                 Double storagePower = null;
                                 Integer chargeLevel = null;
 
@@ -95,9 +96,23 @@ public class SolarEdgePoller extends AbstractVerticle {
                                         storagePower = storage.getDouble("currentPower");
                                         chargeLevel = storage.getInteger("chargeLevel");
                                     }
-                                    if (homePower != null && pvPower != null && storagePower != null && chargeLevel != null) {
-                                        LOG.info("Recieved power state. homePower: " +  homePower + ", pvPower: " + pvPower + ", storagePower: " + storagePower + ", chargeLevel: " +chargeLevel);
-                                        vertx.eventBus().publish(SUN2DRIVE_EVENT_ADDRESS, DEFAULT_ID + ":" + homePower + ":" + pvPower + ":" + storagePower + ":" + chargeLevel);
+                                    JsonObject grid = siteCurrentPowerFlow.getJsonObject("GRID");
+                                    if(grid != null) {
+                                        gridPower = grid.getDouble("currentPower");
+                                    }
+
+                                    if (homePower != null && pvPower != null && storagePower != null && chargeLevel != null && gridPower != null) {
+                                        LOG.info("Recieved power state. homePower: " +  homePower +
+                                                ", pvPower: " + pvPower +
+                                                ", storagePower: " + storagePower +
+                                                ", chargeLevel: " + chargeLevel +
+                                                ", gridPower: " + gridPower);
+                                        vertx.eventBus().publish(SUN2DRIVE_EVENT_ADDRESS, DEFAULT_ID + ":" +
+                                                homePower + ":" +
+                                                pvPower + ":" +
+                                                storagePower + ":" +
+                                                chargeLevel + ":" +
+                                                gridPower);
                                         return;
                                     }
                                 }
